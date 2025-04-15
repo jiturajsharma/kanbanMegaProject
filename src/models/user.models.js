@@ -2,7 +2,7 @@ import mongoose, { Schema } from 'mongoose';
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import crypto from 'crypto'
-
+import { AvailableUserRoles } from '../utils/constants.js'
 
 const userSchema = new Schema(
     {
@@ -22,6 +22,7 @@ const userSchema = new Schema(
             unique: true,
             lowercase: true,
             trim: true,
+            index: true
         },
         email: {
             type: String,
@@ -29,6 +30,12 @@ const userSchema = new Schema(
             unique: true,
             lowercase: true,
             trim: true,
+        },
+        role: {
+            type: String,
+            enum: AvailableUserRoles,
+            default: UserRolesEnum.USER,
+            required: true,
         },
         fullname: {
             type: String,
@@ -77,6 +84,7 @@ userSchema.methods.gerateAccessToken = function () {
             _id: this._id,
             email: this.email,
             username: this.username,
+            role: this.role
         },
         process.env.ACCESS_TOKEN_SECRET,
         {
