@@ -10,17 +10,14 @@ const userRegistrationValidator = () =>{
         .isEmail()
         .withMessage("Email is invalid"),
         body("password").trim().notEmpty().withMessage("Password is required"),
-    body("role")
-        .optional()
-        .isIn(AvailableUserRoles)
-        .withMessage("Invalid user role"),
+
     body("username")
-        .trim()
+        .trim() 
         .notEmpty()
         .withMessage("username is required")
         .isLength({min: 3})
         .withMessage("username should be at least 3 cha")
-        .isLength({max: 3})
+        .isLength({max: 13})
         .withMessage("username cannot exceed 13 char")
     ]
 }

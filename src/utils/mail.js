@@ -1,92 +1,83 @@
-import Mailgen from "mailgen";
+import Mailgen from 'mailgen'
 import nodemailer from 'nodemailer'
 
-
-const sendEmail = async (options) =>{
-    const mailGenerator = new Mailgen({
-        theme: "default",
+const mailgen = async (options) => {
+    var mailGenerator = new Mailgen({
+        theme: 'default',
         product: {
-            name: "Task Manager",
-            link: "https://taskmanager.app"
-        },
-    })
-
-    const emailTextual = mailGenerator.generatePlaintext(options.mailgenContent)
-
-const emailHtml = mailGenerator.generate(options.mailgenContent);
-    
-    const transporter = nodemailer.createTransport({
-        host: process.env.MAILTRAP_SMTP_HOST,
-        port: process.env.MAILTRAP_SMTP_PORT,
-        auth: {
-            user: process.env.MAILTRAP_SMTP_USER,
-            pass: process.env.MAILTRAP_SMTP_PASS
+            name: 'Task Manager',
+            link: 'https://mailgen.js/'
         }
-    })
+    });
 
-    const mail = {
-        from: "mail.taskmanager@example.com",
-        to: options.email,
-        subject: options.subject,
-        text: emailTextual,
-        html: emailHtml,
-    };
+// Generate the plaintext version of the e-mail (for clients that do not support HTML)
+var emailText = mailGenerator.generatePlaintext(options.mailgenContent);
+var emailBody = mailGenerator.generate(options.mailgenContent);
 
-    try {
-        await transporter.sendMail(mail);
-    } catch (error) {
-        console.error(
-            "Email service failed silently. Make sure you have provided your MAILTRAP credentials in the .env file "
-        );
-        console.log("Error", error);
-    }
+const transporter = nodemailer.createTransport({
+    host: process.env.MAILTRAP_HOST,
+    port: process.env.MAILTRAP_PORT,
+    secure: false, // true for port 465, false for other ports
+    auth: {
+        user: process.env.MAILTRAP_USERNAME,
+        pass: process.env.MAILTRAP_PASSWORD,
+    },
+});
+
+const mailOptions = {
+    from: 'indranilmaiti1@gmail.com', // sender address
+    to: options.email, // list of receivers
+    subject: options.subject, // Subject line
+    text: emailText,
+    html: emailBody
 }
 
+try {
+    await transporter.sendMail(mailOptions)
+} catch (error) {
+    console.error("Email failed", error)
+}
+}
 
-
-const emailVerificationMailgenContent = (username, verificationUrl) =>{
+const emailVerificationmailgenContent = (username, verificationUrl) => {
     return {
-        body: {
+        body : {
             name: username,
-            intro: "Welcome to our megaproject! We're very exicited to have you on board",
+            intro: 'Welcome to Mailgen! We\'re very excited to have you on board.',
             action: {
-                instructions: 
-                    "To verify your name please click on the follow button",
-                    button: {
-                        color: "#22BC66",
-                        text: "Verify your email",
-                        link: verificationUrl
-                    }
-            },
-            outro: 
-                "Need help or have questions? Just reply to this email, we'd love to help"
-        }
+                instructions: 'To get started with Our App, please click here:',
+                button: {
+                    color: '#22BC66', 
+                    text: 'Verify your email',
+                    link: verificationUrl
+                } 
+        },
+            outro: 'Need help, or have questions? Just reply to this email, we\'d love to help.'
     }
 }
+}
 
-
-const forgotPasswordMailgenContent = (username, passwordResetUrl) => {
+const forgotPasswordmailgenContent = (username, passwordresetUrl) => {
     return {
-        body: {
-        name: username,
-        intro: "We got a request to reset the password of our account",
-        action: {
-            instructions:
-            "To reset your password click on the following button or link:",
-            button: {
-            color: "#22BC66", // Optional action button color
-            text: "Reset password",
-            link: passwordResetUrl,
-            },
+        body : {
+            name: username,
+            intro: 'Reset your password',
+            action: {
+                instructions: 'To change your password click the button',
+                button: {
+                    color: '#22BC66', 
+                    text: 'reset password',
+                    link: passwordresetUrl
+                } 
         },
-        outro:
-            "Need help, or have questions? Just reply to this email, we'd love to help.",
-        },
-    };
-};
+            outro: 'Need help, or have questions? Just reply to this email, we\'d love to help.'
+    }
+}
+}
+
 
 export {
-    emailVerificationMailgenContent,
-    forgotPasswordMailgenContent,
-    sendEmail,
-};
+    mailgen,
+    emailVerificationmailgenContent,
+    forgotPasswordmailgenContent
+}

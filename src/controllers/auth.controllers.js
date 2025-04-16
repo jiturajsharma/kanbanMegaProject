@@ -3,6 +3,11 @@ import { ApiResponse } from '../utils/api-response.js';
 import { asyncHandler } from '../utils/async-handler.js';
 import { User } from '../models/user.models.js';
 import jwt from 'jsonwebtoken';
+import { mailgen,
+    emailVerificationmailgenContent,
+    forgotPasswordmailgenContent} from '../utils/mail.js'
+
+
 
 // Utils: Generate Tokens
 const generateTokens = async (user) => {
@@ -61,4 +66,75 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
         );
 });
 
+const registerUser = asyncHandler(async (req, res) => {
+    const { email, username, password, fullname } = req.body;
 
+    // Check if user already exists
+    const existingUser = await User.findOne({
+        $or: [{ username: username.toLowerCase() }, { email }]
+    });
+
+    if (existingUser) {
+        throw new ApiError(409, "User with email or username already exists");
+    }
+
+    // Create the user
+    const newUser = await User.create({
+        username: username.toLowerCase(),
+        email,
+        fullname,
+        password,
+    });
+
+    // Get created user without password
+    const createdUser = await User.findById(newUser._id).select("-password");
+
+    if (!createdUser) {
+        throw new ApiError(500, "Something went wrong while registering the user");
+    }
+
+    // Generate email verification token
+    const { hashedToken, unHashedToken, tokenExpiry } = createdUser.generateTemporaryToken();
+
+    createdUser.emailverificationToken = hashedToken;
+    createdUser.emailverificationTokenExpiry = tokenExpiry;
+
+
+    await createdUser.save({ validateBeforeSave: true });
+
+    // Construct verification URL
+    const verificationUrl = `${process.env.BASE_URL}/api/v1/users/verify-email/?token=${unHashedToken}`;
+
+    // Generate email content
+    const emailContent = emailVerificationmailgenContent(createdUser.username, verificationUrl);
+console.log(emailContent)
+    // Send verification email
+    await mailgen({
+        email: createdUser.email,
+        subject: "Verify your email",
+        mailgenContent: emailContent
+    });
+
+    // Respond to client
+    return res.status(201).json(
+        new ApiResponse(201, createdUser, "User registered successfully")
+    );
+});
+
+
+const verifyEmail = asyncHandler(async (req, res) =>{
+    const {token} = req.query
+    if(!token){
+        throw new ApiError(400, "Your token has expired. Request to verify your email again")
+    }
+})
+console.log(verifyEmail)
+
+
+
+
+
+export {
+    registerUser,
+    verifyEmail
+}

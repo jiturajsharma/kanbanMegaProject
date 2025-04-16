@@ -35,7 +35,6 @@ const userSchema = new Schema(
             type: String,
             enum: AvailableUserRoles,
             default: UserRolesEnum.USER,
-            required: true,
         },
         fullname: {
             type: String,
